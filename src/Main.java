@@ -5,6 +5,9 @@ public class Main {
     private static final MemberController memberController = new MemberController();
     public static void main(String[] args) {
         memberController.addMember("Udin", "Bandung", "082312342321");
+        memberController.addMember("Santi", "Jakarta", "089238483934");
+        memberController.addMember("Budi", "Surabaya", "08523892383");
+
         while (true) {
             int pilihan = JOptionPane.showOptionDialog(null,
                     "Pilih pilihan Anda: ",
@@ -194,10 +197,12 @@ public class Main {
                 memberController.getListMembers(),
                 new String[]
                         { "ID", "Nama", "Alamat", "No Telp" });
+        table.setEnabled(false);
         table.getColumnModel().getColumn(0).setPreferredWidth(30);
         table.getColumnModel().getColumn(1).setPreferredWidth(160);
         table.getColumnModel().getColumn(2).setPreferredWidth(210);
         table.getColumnModel().getColumn(3).setPreferredWidth(100);
+
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.setPreferredSize(new Dimension(500, 300));
 
