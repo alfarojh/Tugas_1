@@ -3,27 +3,64 @@ import java.awt.*;
 
 public class Main {
     private static final MemberController memberController = new MemberController();
+    private static int IDMember = -1;
     public static void main(String[] args) {
         memberController.addMember("Udin", "Bandung", "082312342321");
         memberController.addMember("Santi", "Jakarta", "089238483934");
         memberController.addMember("Budi", "Surabaya", "08523892383");
 
         while (true) {
-            int pilihan = JOptionPane.showOptionDialog(null,
-                    "Pilih pilihan Anda: ",
-                    "Menu", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
+            JTable table = new JTable(
+                    memberController.getListMembers(),
+                    new String[]
+                            { "ID", "Nama", "Alamat", "No Telp" });
+            table.getColumnModel().getColumn(0).setWidth(0);
+            table.getColumnModel().getColumn(0).setMinWidth(0);
+            table.getColumnModel().getColumn(0).setMaxWidth(0);
+            table.getColumnModel().getColumn(1).setPreferredWidth(180);
+            table.getColumnModel().getColumn(2).setPreferredWidth(220);
+            table.getColumnModel().getColumn(3).setPreferredWidth(100);
+
+            ListSelectionModel selectionModel = table.getSelectionModel();
+            selectionModel.addListSelectionListener(e -> {
+                if (!e.getValueIsAdjusting()) {
+                    int selectedRow = table.getSelectedRow();
+                    int selectedColumn = table.getSelectedColumn();
+
+                    if (selectedRow >= 0 && selectedColumn >= 0 &&
+                            selectedRow == table.getSelectionModel().getMinSelectionIndex() &&
+                            selectedRow == table.getSelectionModel().getMaxSelectionIndex() &&
+                            selectedColumn == table.getColumnModel().getSelectionModel().getMinSelectionIndex() &&
+                            selectedColumn == table.getColumnModel().getSelectionModel().getMaxSelectionIndex()) {
+
+                        IDMember = Integer.parseInt(String.valueOf(table.getValueAt(selectedRow, 0)));
+                    }
+                }
+            });
+
+            JScrollPane scrollPane = new JScrollPane(table);
+            scrollPane.setPreferredSize(new Dimension(500, 300));
+
+            int choice = JOptionPane.showOptionDialog(null,
+                    scrollPane,
+                    "Menu", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE,
                     null,
-                    new String[]{"Tambah", "Hapus", "Update", "Tampilkan"},
+                    new String[]{"Tambah", "Hapus", "Update"},
                     "Pilihan 1");
 
-            if (pilihan == -1) {
-                JOptionPane.showMessageDialog(null, "Keluar dari program.");
-                break;
+            if (choice == -1) {
+                choice = JOptionPane.showConfirmDialog(null,
+                        "Apakah Anda yakin?", "Konfirmasi", JOptionPane.YES_NO_OPTION);
+
+                if (choice == JOptionPane.YES_OPTION) {
+                    JOptionPane.showMessageDialog(null, "Keluar dari program.");
+                    break;
+                }
             }
-            else if (pilihan == 0) addMember();
-            else if (pilihan == 1) removeMember();
-            else if (pilihan == 2) updateMember();
-            else if (pilihan == 3) showMembers();
+            else if (choice == 0) addMember();
+            else if (choice == 1) removeMember();
+            else if (choice == 2) updateMember();
+            IDMember = -1;
         }
     }
     
@@ -59,13 +96,13 @@ public class Main {
      */
     private static void removeMember() {
         try {
-            String id = validateInput("Masukkan ID yang ingin dihapus: ");
+            if (IDMember < 0) throw new ExceptionBackToMenu();
 
-            if (!id.matches("\\d+")) {
-                JOptionPane.showMessageDialog(null, "Input harus berupa angka!", "Error", JOptionPane.ERROR_MESSAGE);
-                removeMember();
-            } else if (memberController.isMemberExistByID(Integer.parseInt(id))) {
-                if (memberController.removeMember(Integer.parseInt(id))) {
+            if (memberController.isMemberExistByID(IDMember)) {
+                int choice = JOptionPane.showConfirmDialog(null, "Apakah Anda yakin?", "Konfirmasi", JOptionPane.YES_NO_OPTION);
+                if (choice == JOptionPane.NO_OPTION) return;
+
+                if (memberController.removeMember(IDMember)) {
                     JOptionPane.showMessageDialog(null, "Anggota Berhasil dihapus.");
                 } else {
                     JOptionPane.showMessageDialog(null, "Anggota Gagal Dihapus.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -77,7 +114,7 @@ public class Main {
             }
 
         } catch (ExceptionBackToMenu e) {
-//        JOptionPane.showMessageDialog(null, "Kembali ke Menu Utama");
+            JOptionPane.showMessageDialog(null, "Pilih kolom yang ingin dihapus!", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -89,26 +126,22 @@ public class Main {
      */
     private static void updateMember() {
         try {
-            String id = validateInput("Masukkan ID yang ingin diupdate: ");
-
-            if (!id.matches("\\d+")) {
-                JOptionPane.showMessageDialog(null, "Input harus berupa angka!", "Error", JOptionPane.ERROR_MESSAGE);
-                updateMember();
-            } else if (memberController.isMemberExistByID(Integer.parseInt(id))) {
-                int pilihan = JOptionPane.showOptionDialog(null,
-                        "ID Member: " + id +
-                                "\nNama Member: " + memberController.getNameByID(Integer.parseInt(id)) +
+            if (IDMember < 0) throw new ExceptionBackToMenu();
+            if (memberController.isMemberExistByID(IDMember)) {
+                int choice = JOptionPane.showOptionDialog(null,
+                        "ID Member: " + IDMember +
+                                "\nNama Member: " + memberController.getNameByID(IDMember) +
                                 "\nPilih yang ingin di update: ",
                         "Menu", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
                         null,
                         new String[]{"Nama", "Alamat", "No. Telp"},
                         "Pilihan 1");
 
-                switch (pilihan) {
+                switch (choice) {
                     case -1 -> JOptionPane.showMessageDialog(null, "Kembali ke Menu Utama");
-                    case 0 -> updateMemberName(Integer.parseInt(id));
-                    case 1 -> updateMemberAddress(Integer.parseInt(id));
-                    case 2 -> updateMemberPhoneNumber(Integer.parseInt(id));
+                    case 0 -> updateMemberName(IDMember);
+                    case 1 -> updateMemberAddress(IDMember);
+                    case 2 -> updateMemberPhoneNumber(IDMember);
                 }
             } else {
                 JOptionPane.showMessageDialog(null,
@@ -116,7 +149,7 @@ public class Main {
                                 "Kembali ke Menu Utama");
             }
         } catch (ExceptionBackToMenu e) {
-//        JOptionPane.showMessageDialog(null, "Kembali ke Menu Utama.");
+            JOptionPane.showMessageDialog(null, "Pilih kolom yang ingin diupdate!", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -185,54 +218,6 @@ public class Main {
             JOptionPane.showMessageDialog(null, "Nomor Telepon Gagal di Update.");
             throw new ExceptionBackToMenu();
         }
-    }
-
-    /**
-     * Fungsi untuk menampilkan daftar anggota dalam bentuk tabel.
-     * Membuat JTable dari data anggota yang diperoleh dari memberController.
-     * Menentukan lebar kolom dan tampilannya, lalu menampilkannya menggunakan dialog JOptionPane.
-     */
-    static int a = -1;
-    private static void showMembers() {
-        JTable table = new JTable(
-                memberController.getListMembers(),
-                new String[]
-                        { "ID", "Nama", "Alamat", "No Telp" });
-//        table.setEnabled(false);
-        table.getColumnModel().getColumn(0).setPreferredWidth(30);
-        table.getColumnModel().getColumn(1).setPreferredWidth(160);
-        table.getColumnModel().getColumn(2).setPreferredWidth(210);
-        table.getColumnModel().getColumn(3).setPreferredWidth(100);
-
-        ListSelectionModel selectionModel = table.getSelectionModel();
-        selectionModel.addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                int selectedRow = table.getSelectedRow();
-                int selectedColumn = table.getSelectedColumn();
-
-                if (selectedRow >= 0 && selectedColumn >= 0 &&
-                        selectedRow == table.getSelectionModel().getMinSelectionIndex() &&
-                        selectedRow == table.getSelectionModel().getMaxSelectionIndex() &&
-                        selectedColumn == table.getColumnModel().getSelectionModel().getMinSelectionIndex() &&
-                        selectedColumn == table.getColumnModel().getSelectionModel().getMaxSelectionIndex()) {
-
-                    System.out.println("Selected Row: " + selectedRow);
-                    System.out.println("Selected Column: " + selectedColumn);
-                    a = selectedRow;
-                }
-            }
-        });
-
-        JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.setPreferredSize(new Dimension(500, 300));
-
-        int pilihan = JOptionPane.showOptionDialog(null,
-                scrollPane,
-                "Menu", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE,
-                null,
-                new String[]{"Tambah", "Hapus", "Update", "Tampilkan"},
-                "Pilihan 1");
-        System.out.println(a);
     }
 
     //========================================== CRUD =============================================
