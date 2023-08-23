@@ -192,21 +192,47 @@ public class Main {
      * Membuat JTable dari data anggota yang diperoleh dari memberController.
      * Menentukan lebar kolom dan tampilannya, lalu menampilkannya menggunakan dialog JOptionPane.
      */
+    static int a = -1;
     private static void showMembers() {
         JTable table = new JTable(
                 memberController.getListMembers(),
                 new String[]
                         { "ID", "Nama", "Alamat", "No Telp" });
-        table.setEnabled(false);
+//        table.setEnabled(false);
         table.getColumnModel().getColumn(0).setPreferredWidth(30);
         table.getColumnModel().getColumn(1).setPreferredWidth(160);
         table.getColumnModel().getColumn(2).setPreferredWidth(210);
         table.getColumnModel().getColumn(3).setPreferredWidth(100);
 
+        ListSelectionModel selectionModel = table.getSelectionModel();
+        selectionModel.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                int selectedRow = table.getSelectedRow();
+                int selectedColumn = table.getSelectedColumn();
+
+                if (selectedRow >= 0 && selectedColumn >= 0 &&
+                        selectedRow == table.getSelectionModel().getMinSelectionIndex() &&
+                        selectedRow == table.getSelectionModel().getMaxSelectionIndex() &&
+                        selectedColumn == table.getColumnModel().getSelectionModel().getMinSelectionIndex() &&
+                        selectedColumn == table.getColumnModel().getSelectionModel().getMaxSelectionIndex()) {
+
+                    System.out.println("Selected Row: " + selectedRow);
+                    System.out.println("Selected Column: " + selectedColumn);
+                    a = selectedRow;
+                }
+            }
+        });
+
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.setPreferredSize(new Dimension(500, 300));
 
-        JOptionPane.showMessageDialog(null, scrollPane, "Daftar Anggota", JOptionPane.PLAIN_MESSAGE);
+        int pilihan = JOptionPane.showOptionDialog(null,
+                scrollPane,
+                "Menu", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE,
+                null,
+                new String[]{"Tambah", "Hapus", "Update", "Tampilkan"},
+                "Pilihan 1");
+        System.out.println(a);
     }
 
     //========================================== CRUD =============================================
