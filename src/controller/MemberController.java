@@ -27,7 +27,7 @@ public class MemberController {
      */
     public void addMember() {
         try {
-            String name = validateInput("Masukkan nama: ");
+            String name = validateInputName("Masukkan nama: ");
             String address = validateInput("Masukkan alamat: ");
             String phoneNumber = validatePhoneNumber("Masukkan no. telp: ");
 
@@ -115,7 +115,7 @@ public class MemberController {
      */
     private void updateMemberName(int id) throws BackToMenuException {
         try {
-            String name = validateInput("Masukkan nama baru: ");
+            String name = validateInputName("Masukkan nama baru: ");
             if (MEMBER_SERVICES.updateMemberName(id, name)) {
                 JOptionPane.showMessageDialog(null, "Nama Berhasil di Update.");
             } else {
@@ -233,29 +233,50 @@ public class MemberController {
     //========================================== CRUD =============================================
 
     /**
+     * Fungsi untuk memvalidasi input teks.
+     * Meminta input teks dari pengguna melalui dialog JOptionPane.
+     * Melakukan validasi terhadap input dengan beberapa aturan:
+     * - Jika pengguna menutup atau membatalkan JOptionPane, lemparkan BackToMenuException.
+     * - Jika input kosong setelah di-trim, tampilkan pesan error.
+     * Jika input memenuhi aturan validasi, fungsi akan mengembalikan input.
+     *
+     * @param message Pesan yang akan ditampilkan saat meminta input teks.
+     * @return Input teks yang valid.
+     * @throws BackToMenuException Jika pengguna menutup atau membatalkan JOptionPane.
+     */
+    private String validateInput(String message) throws BackToMenuException{
+        String input;
+        while (true) {
+            input = JOptionPane.showInputDialog(message);
+
+            if (input == null) { // Jika pengguna menutup atau membatalkan JOptionPane
+                throw new BackToMenuException();
+            } else if (input.trim().equals("")) {
+                JOptionPane.showMessageDialog(null,
+                        "Input Tidak Boleh Kosong!", "Error", JOptionPane.ERROR_MESSAGE);
+            } else break;
+        }
+        return input.trim();
+    }
+
+    /**
      * Fungsi untuk memvalidasi nomor telepon.
-     * Meminta input nomor telepon dari pengguna melalui dialog JOptionPane.
-     * Melakukan validasi terhadap input nomor telepon dengan beberapa aturan:
-     * - Jika input adalah "null", kembali ke menu utama.
-     * - Jika input kosong, tampilkan pesan error.
-     * - Jika input bukan angka, tampilkan pesan error.
-     * Jika input memenuhi aturan validasi, fungsi akan mengembalikan nomor telepon.
+     * Meminta input nomor telepon dari pengguna melalui fungsi validateInput.
+     * Melakukan validasi terhadap nomor telepon dengan beberapa aturan:
+     * - Jika nomor telepon tidak berupa bilangan bulat positif, tampilkan pesan error.
+     * - Jika panjang nomor telepon tidak dalam rentang 10-13 digit, tampilkan pesan error.
+     * Jika nomor telepon memenuhi aturan validasi, fungsi akan mengembalikan nomor telepon.
      *
      * @param message Pesan yang akan ditampilkan saat meminta input nomor telepon.
      * @return Nomor telepon yang valid.
-     * @throws BackToMenuException Jika terjadi kesalahan yang mengharuskan kembali ke menu utama.
+     * @throws BackToMenuException Jika pengguna menutup atau membatalkan JOptionPane.
      */
     private String validatePhoneNumber(String message) throws BackToMenuException {
         String phoneNumber;
         while (true) {
-            phoneNumber = JOptionPane.showInputDialog(message);
+            phoneNumber = validateInput(message);
 
-            if (String.valueOf(phoneNumber).equals("null")) {
-                throw new BackToMenuException();
-            } else if (phoneNumber.trim().equals("")) {
-                JOptionPane.showMessageDialog(null,
-                        "Input Tidak Boleh Kosong!", "Error", JOptionPane.ERROR_MESSAGE);
-            } else if (!phoneNumber.matches("\\d+")) { // Cek apakah nomor telepon berupa bilangan bulat positif
+            if (!phoneNumber.matches("\\d+")) { // Cek apakah nomor telepon berupa bilangan bulat positif
                 JOptionPane.showMessageDialog(null, "Harus Berupa Angka!", "Error", JOptionPane.ERROR_MESSAGE);
             } else if (phoneNumber.length() < 10 || phoneNumber.length() > 13) {
                 JOptionPane.showMessageDialog(null, "Harus berupa 10-13 digit!", "Error", JOptionPane.ERROR_MESSAGE);
@@ -267,32 +288,29 @@ public class MemberController {
     }
 
     /**
-     * Fungsi untuk memvalidasi input umum.
-     * Meminta input dari pengguna melalui dialog JOptionPane.
-     * Melakukan validasi terhadap input dengan beberapa aturan:
-     * - Jika input adalah "null", kembali ke menu utama.
-     * - Jika input kosong, tampilkan pesan error.
-     * Jika input memenuhi aturan validasi, fungsi akan mengembalikan input.
+     * Fungsi untuk memvalidasi nama.
+     * Meminta input nama dari pengguna melalui fungsi validateInput.
+     * Melakukan validasi terhadap nama dengan beberapa aturan:
+     * - Jika nama mengandung simbol atau karakter khusus selain huruf dan angka, tampilkan pesan error.
+     * Jika nama memenuhi aturan validasi, fungsi akan mengembalikan nama.
      *
-     * @param message Pesan yang akan ditampilkan saat meminta input.
-     * @return Input yang valid.
-     * @throws BackToMenuException Jika terjadi kesalahan yang mengharuskan kembali ke menu utama.
+     * @param message Pesan yang akan ditampilkan saat meminta input nama.
+     * @return Nama yang valid.
+     * @throws BackToMenuException Jika pengguna menutup atau membatalkan JOptionPane.
      */
-    private String validateInput(String message) throws BackToMenuException {
-        String input;
+    private String validateInputName(String message) throws BackToMenuException {
+        String name;
         while (true) {
-            input = JOptionPane.showInputDialog(message);
+            name = validateInput(message);
 
-            if (String.valueOf(input).equals("null")) { // Jika pengguna menutup atau membatalkan JOptionPane
-                throw new BackToMenuException();
-            } else if (input.trim().equals("")) {
+            if (!name.matches("[a-zA-Z0-9\\s]+")) {
                 JOptionPane.showMessageDialog(null,
-                        "Input Tidak Boleh Kosong!", "Error", JOptionPane.ERROR_MESSAGE);
+                        "Nama tidak boleh menggunakan simbol!", "Error", JOptionPane.ERROR_MESSAGE);
             } else {
                 break;
             }
         }
-        return input.trim();
+        return name;
     }
 
     /**
