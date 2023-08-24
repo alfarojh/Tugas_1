@@ -3,27 +3,51 @@ import java.awt.*;
 
 public class Main {
     private static final MemberController memberController = new MemberController();
+    private static int IDMember = -1;
     public static void main(String[] args) {
         memberController.addMember("Udin", "Bandung", "082312342321");
         memberController.addMember("Santi", "Jakarta", "089238483934");
         memberController.addMember("Budi", "Surabaya", "08523892383");
 
         while (true) {
-            int pilihan = JOptionPane.showOptionDialog(null,
-                    "Pilih pilihan Anda: ",
-                    "Menu", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
+            JTable table = new JTable(
+                    memberController.getListMembers(),
+                    new String[]
+                            { "ID", "Nama", "Alamat", "No Telp" });
+            table.getColumnModel().getColumn(0).setWidth(0);
+            table.getColumnModel().getColumn(0).setMinWidth(0);
+            table.getColumnModel().getColumn(0).setMaxWidth(0);
+            table.getColumnModel().getColumn(1).setPreferredWidth(180);
+            table.getColumnModel().getColumn(2).setPreferredWidth(220);
+            table.getColumnModel().getColumn(3).setPreferredWidth(100);
+
+            ListSelectionModel selectionModel = table.getSelectionModel();
+            selectionModel.addListSelectionListener(e -> {
+                if (!e.getValueIsAdjusting()) {
+                    IDMember = Integer.parseInt(String.valueOf(table.getValueAt(table.getSelectedRow(), 0)));
+                }
+            });
+
+            JScrollPane scrollPane = new JScrollPane(table);
+            scrollPane.setPreferredSize(new Dimension(500, 300));
+
+            int choice = JOptionPane.showOptionDialog(null,
+                    scrollPane,
+                    "Menu", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE,
                     null,
-                    new String[]{"Tambah", "Hapus", "Update", "Tampilkan"},
+                    new String[]{"Tambah", "Hapus", "Update"},
                     "Pilihan 1");
 
-            if (pilihan == -1) {
-                JOptionPane.showMessageDialog(null, "Keluar dari program.");
-                break;
+            if (choice == -1) {
+                choice = JOptionPane.showConfirmDialog(null,
+                        "Apakah Anda yakin?", "Konfirmasi", JOptionPane.YES_NO_OPTION);
+
+                if (choice == JOptionPane.YES_OPTION) break;
             }
-            else if (pilihan == 0) addMember();
-            else if (pilihan == 1) removeMember();
-            else if (pilihan == 2) updateMember();
-            else if (pilihan == 3) showMembers();
+            else if (choice == 0) addMember();
+            else if (choice == 1) removeMember();
+            else if (choice == 2) updateMember();
+            IDMember = -1;
         }
     }
     
@@ -46,7 +70,7 @@ public class Main {
             } else {
                 JOptionPane.showMessageDialog(null, "Anggota Gagal Ditambahkan.", "Error", JOptionPane.ERROR_MESSAGE);
             }
-        } catch (ExceptionBackToMenu e) {
+        } catch (BackToMenuException e) {
             JOptionPane.showMessageDialog(null, "Kembali ke Menu Utama");
         }
     }
@@ -59,13 +83,13 @@ public class Main {
      */
     private static void removeMember() {
         try {
-            String id = validateInput("Masukkan ID yang ingin dihapus: ");
+            if (IDMember < 0) throw new BackToMenuException();
 
-            if (!id.matches("\\d+")) {
-                JOptionPane.showMessageDialog(null, "Input harus berupa angka!", "Error", JOptionPane.ERROR_MESSAGE);
-                removeMember();
-            } else if (memberController.isMemberExistByID(Integer.parseInt(id))) {
-                if (memberController.removeMember(Integer.parseInt(id))) {
+            if (memberController.isMemberExistByID(IDMember)) {
+                int choice = JOptionPane.showConfirmDialog(null, "Apakah Anda yakin?", "Konfirmasi", JOptionPane.YES_NO_OPTION);
+                if (choice == JOptionPane.NO_OPTION) return;
+
+                if (memberController.removeMember(IDMember)) {
                     JOptionPane.showMessageDialog(null, "Anggota Berhasil dihapus.");
                 } else {
                     JOptionPane.showMessageDialog(null, "Anggota Gagal Dihapus.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -76,8 +100,8 @@ public class Main {
                                 "Kembali ke Menu Utama");
             }
 
-        } catch (ExceptionBackToMenu e) {
-//        JOptionPane.showMessageDialog(null, "Kembali ke Menu Utama");
+        } catch (BackToMenuException e) {
+            JOptionPane.showMessageDialog(null, "Pilih kolom yang ingin dihapus!", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -89,34 +113,30 @@ public class Main {
      */
     private static void updateMember() {
         try {
-            String id = validateInput("Masukkan ID yang ingin diupdate: ");
-
-            if (!id.matches("\\d+")) {
-                JOptionPane.showMessageDialog(null, "Input harus berupa angka!", "Error", JOptionPane.ERROR_MESSAGE);
-                updateMember();
-            } else if (memberController.isMemberExistByID(Integer.parseInt(id))) {
-                int pilihan = JOptionPane.showOptionDialog(null,
-                        "ID Member: " + id +
-                                "\nNama Member: " + memberController.getNameByID(Integer.parseInt(id)) +
+            if (IDMember < 0) throw new BackToMenuException();
+            if (memberController.isMemberExistByID(IDMember)) {
+                int choice = JOptionPane.showOptionDialog(null,
+                        "ID Member: " + IDMember +
+                                "\nNama Member: " + memberController.getNameByID(IDMember) +
                                 "\nPilih yang ingin di update: ",
                         "Menu", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
                         null,
                         new String[]{"Nama", "Alamat", "No. Telp"},
                         "Pilihan 1");
 
-                switch (pilihan) {
+                switch (choice) {
                     case -1 -> JOptionPane.showMessageDialog(null, "Kembali ke Menu Utama");
-                    case 0 -> updateMemberName(Integer.parseInt(id));
-                    case 1 -> updateMemberAddress(Integer.parseInt(id));
-                    case 2 -> updateMemberPhoneNumber(Integer.parseInt(id));
+                    case 0 -> updateMemberName(IDMember);
+                    case 1 -> updateMemberAddress(IDMember);
+                    case 2 -> updateMemberPhoneNumber(IDMember);
                 }
             } else {
                 JOptionPane.showMessageDialog(null,
                         "ID Tidak Ditemukan\n" +
                                 "Kembali ke Menu Utama");
             }
-        } catch (ExceptionBackToMenu e) {
-//        JOptionPane.showMessageDialog(null, "Kembali ke Menu Utama.");
+        } catch (BackToMenuException e) {
+            JOptionPane.showMessageDialog(null, "Pilih kolom yang ingin diupdate!", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -126,19 +146,18 @@ public class Main {
      * Menampilkan pesan kesuksesan atau kegagalan pembaruan nama.
      *
      * @param id ID anggota yang namanya akan diperbarui.
-     * @throws ExceptionBackToMenu Jika terjadi kesalahan yang mengharuskan kembali ke menu utama.
+     * @throws BackToMenuException Jika terjadi kesalahan yang mengharuskan kembali ke menu utama.
      */
-    private static void updateMemberName(int id) throws ExceptionBackToMenu{
+    private static void updateMemberName(int id) throws BackToMenuException {
         try {
             String name = validateInput("Masukkan nama baru: ");
             if (memberController.updateMemberName(id, name)) {
                 JOptionPane.showMessageDialog(null, "Nama Berhasil di Update.");
             } else {
-                throw new ExceptionBackToMenu();
+                throw new BackToMenuException();
             }
-        } catch (ExceptionBackToMenu e) {
+        } catch (BackToMenuException e) {
             JOptionPane.showMessageDialog(null, "Nama Gagal di Update.");
-            throw new ExceptionBackToMenu();
         }
     }
 
@@ -148,19 +167,18 @@ public class Main {
      * Menampilkan pesan kesuksesan atau kegagalan pembaruan alamat.
      *
      * @param id ID anggota yang alamatnya akan diperbarui.
-     * @throws ExceptionBackToMenu Jika terjadi kesalahan yang mengharuskan kembali ke menu utama.
+     * @throws BackToMenuException Jika terjadi kesalahan yang mengharuskan kembali ke menu utama.
      */
-    private static void updateMemberAddress(int id) throws ExceptionBackToMenu{
+    private static void updateMemberAddress(int id) throws BackToMenuException {
         try {
             String address = validateInput("Masukkan alamat baru: ");
             if (memberController.updateMemberAddress(id, address)) {
                 JOptionPane.showMessageDialog(null, "Alamat Berhasil di Update.");
             } else {
-                throw new ExceptionBackToMenu();
+                throw new BackToMenuException();
             }
-        } catch (ExceptionBackToMenu e) {
+        } catch (BackToMenuException e) {
             JOptionPane.showMessageDialog(null, "Alamat Gagal di Update.");
-            throw new ExceptionBackToMenu();
         }
     }
 
@@ -170,43 +188,20 @@ public class Main {
      * Menampilkan pesan kesuksesan atau kegagalan pembaruan nomor telepon.
      *
      * @param id ID anggota yang nomor teleponnya akan diperbarui.
-     * @throws ExceptionBackToMenu Jika terjadi kesalahan yang mengharuskan kembali ke menu utama.
+     * @throws BackToMenuException Jika terjadi kesalahan yang mengharuskan kembali ke menu utama.
      */
-    private static void updateMemberPhoneNumber(int id) throws ExceptionBackToMenu{
+    private static void updateMemberPhoneNumber(int id) throws BackToMenuException {
         try {
             String phoneNumber = validatePhoneNumber("Masukkan nomor telepon baru: ");
 
             if (memberController.updateMemberPhone(id, phoneNumber)) {
                 JOptionPane.showMessageDialog(null, "Nomor Telepon Berhasil di Update.");
             } else {
-                throw new ExceptionBackToMenu();
+                throw new BackToMenuException();
             }
-        } catch (ExceptionBackToMenu e) {
+        } catch (BackToMenuException e) {
             JOptionPane.showMessageDialog(null, "Nomor Telepon Gagal di Update.");
-            throw new ExceptionBackToMenu();
         }
-    }
-
-    /**
-     * Fungsi untuk menampilkan daftar anggota dalam bentuk tabel.
-     * Membuat JTable dari data anggota yang diperoleh dari memberController.
-     * Menentukan lebar kolom dan tampilannya, lalu menampilkannya menggunakan dialog JOptionPane.
-     */
-    private static void showMembers() {
-        JTable table = new JTable(
-                memberController.getListMembers(),
-                new String[]
-                        { "ID", "Nama", "Alamat", "No Telp" });
-        table.setEnabled(false);
-        table.getColumnModel().getColumn(0).setPreferredWidth(30);
-        table.getColumnModel().getColumn(1).setPreferredWidth(160);
-        table.getColumnModel().getColumn(2).setPreferredWidth(210);
-        table.getColumnModel().getColumn(3).setPreferredWidth(100);
-
-        JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.setPreferredSize(new Dimension(500, 300));
-
-        JOptionPane.showMessageDialog(null, scrollPane, "Daftar Anggota", JOptionPane.PLAIN_MESSAGE);
     }
 
     //========================================== CRUD =============================================
@@ -222,18 +217,20 @@ public class Main {
      *
      * @param message Pesan yang akan ditampilkan saat meminta input nomor telepon.
      * @return Nomor telepon yang valid.
-     * @throws ExceptionBackToMenu Jika terjadi kesalahan yang mengharuskan kembali ke menu utama.
+     * @throws BackToMenuException Jika terjadi kesalahan yang mengharuskan kembali ke menu utama.
      */
-    private static String validatePhoneNumber(String message) throws ExceptionBackToMenu{
+    private static String validatePhoneNumber(String message) throws BackToMenuException {
         String phoneNumber = JOptionPane.showInputDialog(message);
         while (true) {
             if (String.valueOf(phoneNumber).equals("null")) {
-                throw new ExceptionBackToMenu();
+                throw new BackToMenuException();
             } else if (phoneNumber.equals("")) {
                 JOptionPane.showMessageDialog(null,
                         "Input Tidak Boleh Kosong!", "Error", JOptionPane.ERROR_MESSAGE);
-            } else if (!phoneNumber.matches("\\d+")) {
+            } else if (!phoneNumber.matches("\\d+")) { // Cek apakah nomor telepon berupa bilangan bulat positif
                 JOptionPane.showMessageDialog(null, "Harus Berupa Angka!", "Error", JOptionPane.ERROR_MESSAGE);
+            } else if (phoneNumber.length() < 10 || phoneNumber.length() > 13) {
+                JOptionPane.showMessageDialog(null, "Harus berupa 10-13 digit!", "Error", JOptionPane.ERROR_MESSAGE);
             } else {
                 break;
             }
@@ -253,12 +250,12 @@ public class Main {
      *
      * @param message Pesan yang akan ditampilkan saat meminta input.
      * @return Input yang valid.
-     * @throws ExceptionBackToMenu Jika terjadi kesalahan yang mengharuskan kembali ke menu utama.
+     * @throws BackToMenuException Jika terjadi kesalahan yang mengharuskan kembali ke menu utama.
      */
-    private static String validateInput(String message) throws ExceptionBackToMenu {
+    private static String validateInput(String message) throws BackToMenuException {
         String input = JOptionPane.showInputDialog(message);
-        if (String.valueOf(input).equals("null")) {
-            throw new ExceptionBackToMenu();
+        if (String.valueOf(input).equals("null")) { // Jika pengguna menutup atau membatalkan JOptionPane
+            throw new BackToMenuException();
         } else if (input.equals("")) {
             JOptionPane.showMessageDialog(null,
                     "Input Tidak Boleh Kosong!", "Error", JOptionPane.ERROR_MESSAGE);
