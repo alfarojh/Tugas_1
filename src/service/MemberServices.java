@@ -1,7 +1,10 @@
-import java.util.ArrayList;
-import java.util.Arrays;
+package service;
 
-public class MemberController {
+import model.Member;
+
+import java.util.ArrayList;
+
+public class MemberServices {
     private final ArrayList<Member> members = new ArrayList<>();
 
     /**
