@@ -1,3 +1,5 @@
+package model;
+
 public class Member {
     private final int id;
     private String name;
